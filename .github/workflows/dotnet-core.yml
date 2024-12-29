@@ -18,7 +18,7 @@ jobs:
       with:
         dotnet-version: '9.x'
         include-prerelease: true
-    - name: Install dependencies
+    - name: Install dependenciess
       run: |
         dotnet restore DemoContentBuilder
         dotnet restore Demos
