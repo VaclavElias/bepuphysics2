@@ -2,9 +2,6 @@ name: .NET Core
 
 on:
   push:
-    paths-ignore:
-      - '.github/**'
-      - 'Documentation/**'  
   pull_request:
     paths-ignore:
       - '.github/**'
