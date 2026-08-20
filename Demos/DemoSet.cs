@@ -72,6 +72,7 @@ public class DemoSet
         AddOption<SolverContactEnumerationDemo>();
         AddOption<CustomVoxelCollidableDemo>();
         AddOption<BlockChainDemo>();
+        AddOption<HullContactNaNDemo>();
         AddOption<SponsorDemo>();
     }
 
