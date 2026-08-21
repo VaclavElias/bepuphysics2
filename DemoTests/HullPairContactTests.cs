@@ -149,6 +149,57 @@ namespace DemoTests
         }
 
         /// <summary>
+        /// Shows the failures are not limited to deep interpenetration. The pair is placed at a center
+        /// distance in [1.6, 1.95] for circumradius 1 shapes, where the hulls only graze each other -
+        /// a decagon's faces touch at 1.90, so a failure at 1.85 is an overlap of about 0.05, well
+        /// inside the range an ordinary resting stack produces and below the 0.1 speculative margin.
+        /// </summary>
+        [Fact]
+        public static void ExtrudedPolygonPairsAtShallowOverlapsHaveFiniteContactDepths()
+        {
+            const float radius = 1f;
+            const float depth = 4f;
+            const int trials = 200;
+
+            var pool = new BufferPool();
+            var registry = DefaultTypes.CreateDefaultCollisionTaskRegistry();
+            var report = "";
+
+            foreach (var sides in (int[])[3, 4, 5, 6, 7, 8, 10])
+            {
+                var shapes = new Shapes(pool, 8);
+                var hull = shapes.Add(CreateExtrudedPolygon(sides, radius, depth, pool));
+                var random = new Random(1);
+                int failures = 0;
+                float shallowest = 0;
+
+                for (int trial = 0; trial < trials; ++trial)
+                {
+                    var angle = random.NextSingle() * MathF.Tau;
+                    var distance = 1.6f + random.NextSingle() * 0.35f;
+                    var poseA = new RigidPose(default, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, random.NextSingle() * MathF.Tau));
+                    var poseB = new RigidPose(
+                        new Vector3(MathF.Cos(angle) * distance, MathF.Sin(angle) * distance, 0),
+                        Quaternion.CreateFromAxisAngle(Vector3.UnitZ, random.NextSingle() * MathF.Tau));
+
+                    if (!AllDepthsFinite(ComputeManifold(shapes, registry, pool, hull, poseA, poseB)))
+                    {
+                        ++failures;
+                        shallowest = MathF.Max(shallowest, distance);
+                    }
+                }
+
+                if (failures > 0)
+                    report += $"sides={sides}: {failures}/{trials} shallow placements produced a non-finite depth, the shallowest at a center distance of {shallowest}. ";
+
+                shapes.Dispose();
+            }
+
+            Assert.True(report.Length == 0, report);
+            pool.Clear();
+        }
+
+        /// <summary>
         /// The control: an analytic Box pair given the identical placements (same seed, same offsets,
         /// same rotations) never produces a non-finite depth, so deep overlap by itself is handled
         /// fine and the hull tester owns the failures above.
